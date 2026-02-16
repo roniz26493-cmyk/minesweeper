@@ -2,30 +2,65 @@
 //model
 var gBoard
 
+//var gIsFirstCell
 
 var gLevel =
 {
-    SIZE: 4,
-    MINES: 2
+    SIZE: 8,
+    MINES: 5
 }
 
-var gGame = {
-    isOn: false,
-    revealedCount: 0,
-    markedCount: 0,
-    secsPassed: 0
-}
+var gGame
 
 
 function onInit() {
-    gGame.isOn = true
+    gGame = {
+        isOn: true,
+        revealedCount: 0,
+        markedCount: 0,
+        secsPassed: 0,
+        lives: 3,
+        isFirstCell: true
+    }
+    console.log('game started')
+    console.log('lives ', gGame.lives)
+
+    //gIsFirstCell = true
+
     gBoard = buildBoard()
     //placedMinesRandomly()
-    console.log(' gBoard after minesPlaced', gBoard)
+    renderBoard(gBoard)
+    renderLives()
+}
+function onCellClicked(elCell, i, j) {
 
-    setMinesNegsCount(gBoard)
+    if (!gGame.isOn) {
+        console.log('the game is off')
+        return
+    }
+
+    var currCell = gBoard[i][j]
+    console.log('click', i, j)
+
+    if (currCell.isRevealed || currCell.isMarked) return
+
+
+    if (gGame.isFirstCell) {
+        console.log('first click')
+        placedMinesRandomly(i, j)
+        setMinesNegsCount(gBoard)
+        gGame.isFirstCell = false
+    }
+
+    gBoard[i][j].isRevealed = true
+
+    if (currCell.isMine) {
+        console.log('mine clicked')
+        handleMineClick()
+    }
     renderBoard(gBoard)
 }
+
 //DOM
 function renderBoard(board) {
 
@@ -56,7 +91,7 @@ function renderBoard(board) {
 
             strHTML += `
                 <td onclick="onCellClicked(this,${i}, ${j})"
-                    oncontextmenu="onCellMarked(this, ${i}, ${j})">
+                    oncontextmenu="onCellMarked(event, ${i}, ${j})">
                 ${cellContent}
                 </td>
             `
@@ -69,19 +104,7 @@ function renderBoard(board) {
     elBoard.innerHTML = strHTML
 }
 
-// function buildBoard() {// hard coded
-//     var size = 4
-//     var board = []
 
-//     for (var i = 0; i < size; i++) {
-//         board[i] = []
-//         for (var j = 0; j < size; j++) {
-//             board[i][j] = {
-//                 minesAroundCount: 0,
-//                 isRevealed: false,
-//                 isMine: false,
-//                 isMarked: false
-// }
 function buildBoard() {
     var board = []
 
@@ -98,29 +121,13 @@ function buildBoard() {
         }
     }
 
-    board[1][1].isMine = true //add mines to the model, for now in specific cell- need to change to rendom
-    board[2][3].isMine = true
+    // board[1][1].isMine = true //add mines to the model, for now in specific cell- need to change to rendom
+    //board[2][3].isMine = true
 
     return board
 }
 
 
-function onCellClicked(elCell, i, j) {
-
-
-    //console.log('before change:', gBoard[i][j])
-
-    if (!gGame.isOn) {
-        //console.log('game is off')
-        return
-    }
-
-    gBoard[i][j].isRevealed = true
-
-    //console.log('after change:', gBoard[i][j])
-
-    renderBoard(gBoard)
-}
 
 //call the set function before the render in oninit() so the board will update with the minesCountAround
 function setMinesNegsCount(board) {
@@ -192,7 +199,11 @@ function countMinesAround(rowIdx, colIdx, board) { //negs loop, counts the curre
     return neighborsCount
 }
 
-function onCellMarked(elCell, i, j) {
+function onCellMarked(event, i, j) {
+    //console.log('event', event)
+    //console.log(event.type)
+    event.preventDefault()
+
     var cell = gBoard[i][j]
     if (!gGame.isOn) return
 
@@ -207,22 +218,24 @@ function onCellMarked(elCell, i, j) {
 
 }
 //model 
-function placedMinesRandomly() {
+function placedMinesRandomly(firstI, firstJ) {
 
     var placedMines = 0
 
-    console.log('before placing:', placedMines)
 
     while (placedMines < gLevel.MINES) {
 
         var i = getRandomInt(0, gLevel.SIZE)
         var j = getRandomInt(0, gLevel.SIZE)
-        console.log(' i, j', i, j)
 
+        // console.log('the random i, j', i, j)
+
+        if (i === firstI && j === firstJ) continue
         if (gBoard[i][j].isMine === true) continue
 
         gBoard[i][j].isMine = true
         placedMines++
+
         //console.log('total placed mines:', placedMines)
 
 
@@ -230,9 +243,39 @@ function placedMinesRandomly() {
     }
 
 }
+function revealAllMines() {
+
+    for (var i = 0; i < gBoard.length; i++) {
+        for (var j = 0; j < gBoard[0].length; j++) {
+
+            if (gBoard[i][j].isMine) {
+                gBoard[i][j].isRevealed = true
+            }
+        }
+    }
+}
+function handleMineClick() {
+
+    gGame.lives--
+    console.log('lives left', gGame.lives)
+
+    renderLives()
+
+    if (gGame.lives === 0) {
+        console.log('game over')
+        revealAllMines()
+        gGame.isOn = false
+        alert('Game Over')
+    }
+}
+
+function renderLives() {
+    document.querySelector('.lives').innerText = gGame.lives
+}
 
 function getRandomInt(min, max) {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 }
+
