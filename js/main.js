@@ -31,6 +31,7 @@ function onInit() {
     //placedMinesRandomly()
     renderBoard(gBoard)
     renderLives()
+    renderSmiley('😃')
 }
 function onCellClicked(elCell, i, j) {
 
@@ -52,11 +53,11 @@ function onCellClicked(elCell, i, j) {
         gGame.isFirstCell = false
     }
 
-    gBoard[i][j].isRevealed = true
-
     if (currCell.isMine) {
         console.log('mine clicked')
-        handleMineClick()
+        handleMineClick(i, j)
+    } else {
+        currCell.isRevealed = true
     }
     renderBoard(gBoard)
 }
@@ -254,23 +255,50 @@ function revealAllMines() {
         }
     }
 }
-function handleMineClick() {
+function handleMineClick(i, j) {
 
     gGame.lives--
-    console.log('lives left', gGame.lives)
+    console.log('lives left:', gGame.lives)
+
+    renderSmiley('😮')
 
     renderLives()
+
+    if (gGame.lives > 0) {
+        setTimeout(function () {
+            renderSmiley('😃')
+        }, 500)
+    }
+
+    gBoard[i][j].isRevealed = true // show the mine when cell with mine clicked
+    renderBoard(gBoard)
+
+    setTimeout(function () { // after 500 milisecond we close the cell again
+        if (gGame.lives > 0) {
+            gBoard[i][j].isRevealed = false
+            renderBoard(gBoard)
+        }
+    }, 500)
 
     if (gGame.lives === 0) {
         console.log('game over')
         revealAllMines()
         gGame.isOn = false
+        renderSmiley('🤯')
         alert('Game Over')
     }
 }
 
 function renderLives() {
     document.querySelector('.lives').innerText = gGame.lives
+}
+function renderSmiley(smiley) {
+    var elSmiley = document.querySelector('.smiley')
+    elSmiley.innerText = smiley
+}
+function onSmileyClick() {
+    console.log('smiley clicked (reset game)')
+    onInit()
 }
 
 function getRandomInt(min, max) {

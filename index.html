@@ -5,10 +5,14 @@
     <title>Minesweeper</title>
     <link rel="stylesheet" href="css/main.css" />
   </head>
+
   <body onload="onInit()">
     <h1>Minesweeper</h1>
 
-    <div>Lives: <span class="lives"></span></div>
+    <div class="top-panel">
+      <div>Lives: <span class="lives"></span></div>
+      <button class="smiley" onclick="onSmileyClick()">😃</button>
+    </div>
 
     <table class="board"></table>
 
