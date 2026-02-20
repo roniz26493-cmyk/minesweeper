@@ -1,6 +1,7 @@
 'use strict'
 //model
 var gBoard
+var gIsDev = true // if true - placed hard coded mines, if false- place mines randomly 
 
 //var gIsFirstCell
 
@@ -48,7 +49,11 @@ function onCellClicked(elCell, i, j) {
 
     if (gGame.isFirstCell) {
         console.log('first click')
-        placedMinesRandomly(i, j)
+        if (gIsDev) {
+            placedMinesStatic()
+        } else {
+            placedMinesRandomly(i, j)
+        }
         setMinesNegsCount(gBoard)
         gGame.isFirstCell = false
     }
@@ -58,8 +63,14 @@ function onCellClicked(elCell, i, j) {
         handleMineClick(i, j)
     } else {
         currCell.isRevealed = true
+        gGame.revealedCount++
+        console.log('revealedCount:', gGame.revealedCount)
+        if (currCell.minesAroundCount === 0) {
+            expand(i, j)
+        }
     }
     renderBoard(gBoard)
+    checkVictory()
 }
 
 //DOM
@@ -244,6 +255,15 @@ function placedMinesRandomly(firstI, firstJ) {
     }
 
 }
+function placedMinesStatic() {
+    console.log('placing static mines')
+
+    gBoard[1][1].isMine = true
+    gBoard[2][3].isMine = true
+    gBoard[4][4].isMine = true
+    gBoard[6][0].isMine = true
+
+}
 function revealAllMines() {
 
     for (var i = 0; i < gBoard.length; i++) {
@@ -305,5 +325,55 @@ function getRandomInt(min, max) {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+}
+
+function checkVictory() {
+
+    var totalCells = gLevel.SIZE * gLevel.SIZE
+    var safeCells = totalCells - gLevel.MINES
+
+    console.log('safeCells:', safeCells)
+
+    if (gGame.revealedCount === safeCells) {
+
+        gGame.isOn = false
+        alert('Victory!')
+    }
+}
+
+function expand(rowIdx, colIdx) {
+
+    console.log('ENTER expand:', rowIdx, colIdx)
+
+    for (var i = rowIdx - 1; i <= rowIdx + 1; i++) {
+
+        if (i < 0 || i >= gBoard.length) continue
+
+        for (var j = colIdx - 1; j <= colIdx + 1; j++) {
+
+            if (j < 0 || j >= gBoard[0].length) continue
+            if (i === rowIdx && j === colIdx) continue
+
+            var neighbor = gBoard[i][j]
+
+            console.log('Checking neighbor:', i, j)
+
+            if (neighbor.isRevealed || neighbor.isMine || neighbor.isMarked) {
+                console.log('Skipping neighbor:', i, j)
+                continue
+            }
+
+            neighbor.isRevealed = true
+            gGame.revealedCount++
+            console.log('Revealed:', i, j)
+
+            if (neighbor.minesAroundCount === 0) {
+                console.log('Recursing into:', i, j)
+                expand(i, j)
+            }
+        }
+    }
+
+    console.log('EXIT expand:', rowIdx, colIdx)
 }
 
